@@ -1,24 +1,33 @@
-import { Container, Typography, AppBar, Toolbar, makeStyles } from '@material-ui/core';
+import { Container, Typography, AppBar, Toolbar, makeStyles,Button } from '@material-ui/core';
 import TodoList from './components/TodoList';
+import { useAuth0, withAuthenticationRequired } from "@auth0/auth0-react";
+import Logout from './components/Logout-Button'
 
-const useStyles = makeStyles(theme => ({
-  main: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'stretch'
-  }
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  menuButton: {
+    marginRight: theme.spacing(2),
+  },
+  title: {
+    flexGrow: 1,
+  },
 }));
 
 function App() {
+  const { user } = useAuth0;
 
   const classes = useStyles();
 
   return (
     <>
-      <AppBar position="fixed">
+      <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6">My Todos</Typography>
+          <Typography variant="h6" className={classes.title}>
+            Super Todo
+    </Typography>
+          <Logout >Logout</Logout>
         </Toolbar>
       </AppBar>
       <Container fixed>
@@ -31,4 +40,6 @@ function App() {
   );
 }
 
-export default App;
+export default withAuthenticationRequired(App, {
+  onRedirecting: () => <></>,
+});
