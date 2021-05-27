@@ -1,6 +1,10 @@
 import express from 'express';
 import * as todosDao from '../../db/todos-dao';
 import mongoose from 'mongoose';
+const jwt = require('express-jwt');
+const jwtAuthz = require('express-jwt-authz');
+const jwksRsa = require('jwks-rsa');
+
 
 // const HTTP_OK = 200; // Not really needed; this is the default if you don't set something else.
 const HTTP_CREATED = 201;
@@ -10,6 +14,26 @@ const HTTP_BAD_REQUEST = 400;
 
 const router = express.Router();
 
+const checkJwt = jwt({
+    // Dynamically provide a signing key
+    // based on the kid in the header and 
+    // the signing keys provided by the JWKS endpoint.
+    secret: jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: `https://zach.au.auth0.com/.well-known/jwks.json`
+    }),
+  
+    // Validate the audience and the issuer.
+    audience: 'superTodo',
+    issuer: [`https://zach.au.auth0.com/`],
+    algorithms: ['RS256']
+  });
+  const checkScopes = jwtAuthz(['read:user']);
+
+
+
 // TODO Exercise Four: Add your RESTful routes here.
 
 /**
@@ -17,7 +41,7 @@ const router = express.Router();
  * If "next()" is called, the next route below that matches will be called. Otherwise, we just end the response.
  * The "use()" function will match ALL HTTP request method types (i.e. GET, PUT, POST, DELETE, etc).
  */
-router.use('/:id', async (req, res, next) => {
+router.use('/:id', checkJwt,async (req, res, next) => {
     const { id } = req.params;
     if (mongoose.isValidObjectId(id)) {
         next();
@@ -29,7 +53,7 @@ router.use('/:id', async (req, res, next) => {
 });
 
 // Create todo
-router.post('/', async (req, res) => {
+router.post('/',checkJwt, async (req, res) => {
     if (!req.body.title) {
         res.status(HTTP_BAD_REQUEST)
             .contentType('text/plain').send('New todos must have a title');
@@ -42,7 +66,7 @@ router.post('/', async (req, res) => {
 });
 
 // Retrieve todo list
-router.get('/', async (req, res) => {
+router.get('/', checkJwt,async (req, res) => {
 
     // Uncomment this code if you want to introduce an artificial delay.
     // setTimeout(async () => {
@@ -54,7 +78,7 @@ router.get('/', async (req, res) => {
 });
 
 // Retrieve single todo
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkJwt,async (req, res) => {
     const { id } = req.params;
     const todo = await todosDao.retrieveTodo(id);
     if (todo) {
@@ -66,7 +90,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update todo
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkJwt,async (req, res) => {
     const { id } = req.params;
     const todo = {
         ...req.body,
@@ -77,7 +101,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete todo
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkJwt,async (req, res) => {
     const { id } = req.params;
     await todosDao.deleteTodo(id);
     res.sendStatus(HTTP_NO_CONTENT);

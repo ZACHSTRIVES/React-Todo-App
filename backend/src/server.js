@@ -6,12 +6,14 @@ import connectToDatabase from './db/db-connect';
 const app = express();
 const port = process.env.PORT || 3001;
 
+
+
 // Setup body-parser
 app.use(express.json());
 
 // Setup our routes.
 import routes from './routes';
-app.use('/', routes);
+app.use('/',routes);
 
 // Make the "public" folder available statically
 app.use(express.static(path.join(__dirname, '../public')));
@@ -21,7 +23,7 @@ if (process.env.NODE_ENV === 'production') {
     console.log('Running in production!');
 
     // Make all files in that folder public
-    app.use(express.static(path.join(__dirname, '../../frontend/build')));
+    app.use(express.static(path.join(__dirname, '../../frontend/build'))); 
 
     // If we get any GET request we can't process using one of the server routes, serve up index.html by default.
     app.get('*', (req, res) => {

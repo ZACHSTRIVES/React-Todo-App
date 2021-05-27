@@ -19,6 +19,8 @@ const Auth0ProviderWithHistory = ({ children }) => {
       clientId={clientId}
       redirectUri={window.location.origin}
       onRedirectCallback={onRedirectCallback}
+      audience="superTodo"
+      scope="read:user"
     >
       {children}
     </Auth0Provider>
