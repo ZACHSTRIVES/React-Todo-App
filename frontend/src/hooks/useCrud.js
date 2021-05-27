@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth0} from "@auth0/auth0-react";
+import { useAuth0 } from "@auth0/auth0-react";
 /**
  * A more advanced version of useGet(), which exposes functions for creating, updating, and deleting
  * items, and being able to have these modifications applied to the "data" state without having to do
@@ -10,27 +10,31 @@ export default function useCrud(baseUrl, initialState = null, idProp = '_id') {
     const [data, setData] = useState(initialState);
     const [isLoading, setLoading] = useState(false);
     const [version, setVersion] = useState(0);
-    const {getAccessTokenSilently} = useAuth0();
-  
+    const { getAccessTokenSilently } = useAuth0();
+
     // Load all data when we first use this hook, or whenever we change the url or re-fetch.
-    useEffect(async() => {
-        const token=await getAccessTokenSilently();
-        setLoading(true);
-        console.log(token)
-        axios.get(baseUrl,{
-            headers:{
-                Authorization:`Bearer ${token}`,
-            }
-        })
-            .then(response => {
-                setLoading(false);
-                setData(response.data);
+    useEffect(() => {
+        async function initData() {
+            const token = await getAccessTokenSilently();
+            setLoading(true);
+            axios.get(baseUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
             })
-            .catch(err => {
-                // TODO error handling...
-                setLoading(false);
-            });
-    }, [baseUrl, version]);    
+                .then(response => {
+                    setLoading(false);
+                    setData(response.data);
+                })
+                .catch(err => {
+                    // TODO error handling...
+                    setLoading(false);
+                });
+        }
+        initData();
+    }
+   
+    , [baseUrl, version]);
 
     // Trigger a re-fetch
     function reFetch() {
@@ -45,11 +49,11 @@ export default function useCrud(baseUrl, initialState = null, idProp = '_id') {
      * with the new data, then roll it back if the server-side update fails.
      */
     async function update(item) {
-        const token=await getAccessTokenSilently();
-        
-        return axios.put(`${baseUrl}/${item[idProp]}`, item,{
-            headers:{
-                Authorization:`Bearer ${token}`,
+        const token = await getAccessTokenSilently();
+
+        return axios.put(`${baseUrl}/${item[idProp]}`, item, {
+            headers: {
+                Authorization: `Bearer ${token}`,
             }
         })
             .then(response => {
@@ -69,10 +73,10 @@ export default function useCrud(baseUrl, initialState = null, idProp = '_id') {
      * with the new data, then roll it back if the server-side update fails.
      */
     async function create(item) {
-        const token=await getAccessTokenSilently();
-        return axios.post(baseUrl, item,{
-            headers:{
-                Authorization:`Bearer ${token}`,
+        const token = await getAccessTokenSilently();
+        return axios.post(baseUrl, item, {
+            headers: {
+                Authorization: `Bearer ${token}`,
             }
         })
             .then(response => {
@@ -89,10 +93,10 @@ export default function useCrud(baseUrl, initialState = null, idProp = '_id') {
      * item from the "data" state.
      */
     async function deleteItem(id) {
-        const token=await getAccessTokenSilently();
-        return axios.delete(`${baseUrl}/${id}`,{
-            headers:{
-                Authorization:`Bearer ${token}`,
+        const token = await getAccessTokenSilently();
+        return axios.delete(`${baseUrl}/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
             }
         })
             .then(response => {

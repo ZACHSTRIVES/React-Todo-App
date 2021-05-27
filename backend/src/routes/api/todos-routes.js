@@ -9,6 +9,7 @@ const jwksRsa = require('jwks-rsa');
 // const HTTP_OK = 200; // Not really needed; this is the default if you don't set something else.
 const HTTP_CREATED = 201;
 const HTTP_NOT_FOUND = 404;
+const UNAUTHENTICATED = 401;
 const HTTP_NO_CONTENT = 204;
 const HTTP_BAD_REQUEST = 400;
 
@@ -30,7 +31,6 @@ const checkJwt = jwt({
     issuer: [`https://zach.au.auth0.com/`],
     algorithms: ['RS256']
   });
-  const checkScopes = jwtAuthz(['read:user']);
 
 
 
@@ -54,12 +54,15 @@ router.use('/:id', checkJwt,async (req, res, next) => {
 
 // Create todo
 router.post('/',checkJwt, async (req, res) => {
+
     if (!req.body.title) {
         res.status(HTTP_BAD_REQUEST)
             .contentType('text/plain').send('New todos must have a title');
         return;
     }
-    const newTodo = await todosDao.createTodo(req.body);
+    const tempTodo= req.body;
+    tempTodo.userSub=req.user.sub;
+    const newTodo = await todosDao.createTodo(tempTodo);
     res.status(HTTP_CREATED)
         .header('location', `/api/todos/${newTodo._id}`)
         .json(newTodo);
@@ -67,20 +70,23 @@ router.post('/',checkJwt, async (req, res) => {
 
 // Retrieve todo list
 router.get('/', checkJwt,async (req, res) => {
-
     // Uncomment this code if you want to introduce an artificial delay.
     // setTimeout(async () => {
     //     res.json(await todosDao.retrieveAllTodos());
     // }, 2000);
 
     // Comment this code if you want to introduce an artificial delay.
-    res.json(await todosDao.retrieveAllTodos());
+    res.json(await todosDao.retrieveAllTodos(req.user.sub));
 });
 
 // Retrieve single todo
 router.get('/:id', checkJwt,async (req, res) => {
-    const { id } = req.params;
+    const {id} = req.params;
     const todo = await todosDao.retrieveTodo(id);
+    if (todo.userSub!==req.user.sub){
+        res.sendStatus(UNAUTHENTICATED)
+        return;
+    }
     if (todo) {
         res.json(todo);
     }
@@ -96,6 +102,10 @@ router.put('/:id', checkJwt,async (req, res) => {
         ...req.body,
         _id: id
     };
+    if (todo.userSub!==req.user.sub){
+        res.sendStatus(UNAUTHENTICATED)
+        return;
+    }
     const success = await todosDao.updateTodo(todo);
     res.sendStatus(success ? HTTP_NO_CONTENT : HTTP_NOT_FOUND);
 });
@@ -103,8 +113,14 @@ router.put('/:id', checkJwt,async (req, res) => {
 // Delete todo
 router.delete('/:id', checkJwt,async (req, res) => {
     const { id } = req.params;
+    const todo = await todosDao.retrieveTodo(id);
+
+    if (todo.userSub!==req.user.sub){
+        res.sendStatus(UNAUTHENTICATED)
+        return;
+    }
     await todosDao.deleteTodo(id);
-    res.sendStatus(HTTP_NO_CONTENT);
+    res.sendStatus( HTTP_NO_CONTENT );
 })
 
 export default router;

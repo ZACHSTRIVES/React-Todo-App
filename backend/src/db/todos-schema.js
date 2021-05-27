@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 // TODO Exercise One: Model your schema here. Make sure to export it!
 const todoSchema = new Schema({
-    // userEmail:{type:String,required:true},
+    userSub: {type:String,required:true},
     title: { type: String, required: true },
     description: String,
     isComplete: Boolean,

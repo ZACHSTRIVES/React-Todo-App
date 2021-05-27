@@ -13,8 +13,9 @@ export async function createTodo(todo) {
     return dbTodo;
 }
 
-export async function retrieveAllTodos() {
-    return await Todo.find();
+export async function retrieveAllTodos(sub) {
+    const user={userSub:sub}
+    return await Todo.find(user);
 }
 
 export async function retrieveTodo(id) {
