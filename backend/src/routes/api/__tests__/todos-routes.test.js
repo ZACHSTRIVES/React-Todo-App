@@ -14,6 +14,7 @@ let mongod, app, server;
 // Some dummy data to test with
 const overdueTodo = {
     _id: new mongoose.mongo.ObjectId('000000000000000000000002'),
+    userSub: 'auth0|000000000000000000000000001',
     title: 'OverdueTitle',
     description: 'OverdueDesc',
     isComplete: false,
@@ -22,6 +23,7 @@ const overdueTodo = {
 
 const upcomingTodo = {
     _id: new mongoose.mongo.ObjectId('000000000000000000000003'),
+    userSub: 'auth0|000000000000000000000000001',
     title: 'UpcomingTitle',
     description: 'UpcomingDesc',
     isComplete: false,
@@ -30,6 +32,7 @@ const upcomingTodo = {
 
 const completeTodo = {
     _id: new mongoose.mongo.ObjectId('000000000000000000000004'),
+    userSub: 'auth0|000000000000000000000000002',
     title: 'CompleteTitle',
     description: 'CompleteDesc',
     isComplete: true,
@@ -37,6 +40,18 @@ const completeTodo = {
 }
 
 const dummyTodos = [overdueTodo, upcomingTodo, completeTodo];
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Start database and server before any tests run
 beforeAll(async done => {
@@ -274,5 +289,86 @@ it('Doesn\'t delete anything when it shouldn\'t', async () => {
 
     // Make sure something wasn't deleted from the db
     expect(await Todo.countDocuments()).toBe(3);
+
+})
+
+
+it('Gives a 401 when trying to retrieve all todos without authorization', async () => {
+    try {
+        const response = await axios.get('http://localhost:3000/api/todos');
+
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+
+    }
+
+})
+
+it('Gives a 401 when trying to retrieve a todo without authorization', async () => {
+    try {
+        const response = await axios.get('http://localhost:3000/api/todos/000000000000000000000002');
+
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+
+    }
+
+})
+
+it('Gives a 401 when trying to create a todo without authorization', async () => {
+    try {
+        const newTodo = {
+            userSub: 'auth0|000000000000000000000000001',
+            title: 'NewTodo',
+            description: 'NewDesc',
+            isComplete: false,
+            dueDate: dayjs('2100-01-01').format()
+        }
+
+        const response = await axios.post('http://localhost:3000/api/todos', newTodo);
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+
+    }
+
+})
+
+it('Gives a 401 when trying to update a todo without authorization', async () => {
+    try {
+        const toUpdate = {
+            _id: new mongoose.mongo.ObjectId('000000000000000000000004'),
+            title: 'UPDCompleteTitle',
+            description: 'UPDCompleteDesc',
+            isComplete: false,
+            dueDate: dayjs('2100-01-01').format()
+        }
+
+        const response = await axios.put('http://localhost:3000/api/todos/000000000000000000000004', toUpdate);
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+
+    }
+
+})
+
+it('Gives a 401 when trying to delete a todo without authorization', async () => {
+    try {
+        const response = await axios.delete('http://localhost:3000/api/todos/000000000000000000000003');
+        expect(response.status).toBe(204);
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+        
+
+    }
 
 })
