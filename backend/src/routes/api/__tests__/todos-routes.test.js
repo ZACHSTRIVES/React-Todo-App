@@ -80,7 +80,16 @@ const completeTodo = {
     dueDate: dayjs().format()
 }
 
-const dummyTodos = [overdueTodo, upcomingTodo, completeTodo];
+const otherUsersTodo = {
+    _id: new mongoose.mongo.ObjectId('000000000000000000000005'),
+    userSub: 'auth0|000000000000000000000000002',
+    title: 'OtherUsersTodoTitle',
+    description: 'OtherUsersTodoDesc',
+    isComplete: true,
+    dueDate: dayjs().format()
+}
+
+const dummyTodos = [overdueTodo, upcomingTodo, completeTodo,otherUsersTodo];
 jest.setTimeout(50000000)
 
 // Start database and server before any tests run
@@ -222,7 +231,7 @@ it('Gives a 400 when trying to create a todo with no title', async () => {
         expect(response.status).toBe(400);
 
         // Ensure DB wasn't modified
-        expect(await Todo.countDocuments()).toBe(3);
+        expect(await Todo.countDocuments()).toBe(4);
     }
 })
 
@@ -303,7 +312,7 @@ it('Gives a 404 when updating a nonexistant todo', async () => {
         expect(response.status).toBe(404);
 
         // Make sure something wasn't added to the db
-        expect(await Todo.countDocuments()).toBe(3);
+        expect(await Todo.countDocuments()).toBe(4);
     }
 
 })
@@ -324,7 +333,7 @@ it('Doesn\'t delete anything when it shouldn\'t', async () => {
     expect(response.status).toBe(204);
 
     // Make sure something wasn't deleted from the db
-    expect(await Todo.countDocuments()).toBe(3);
+    expect(await Todo.countDocuments()).toBe(4);
 
 })
 
@@ -381,6 +390,7 @@ it('Gives a 401 when trying to create a todo without authorization', async () =>
 it('Gives a 401 when trying to update a todo without authorization', async () => {
     try {
         const toUpdate = {
+            userSub: 'auth0|000000000000000000000000001',
             _id: new mongoose.mongo.ObjectId('000000000000000000000004'),
             title: 'UPDCompleteTitle',
             description: 'UPDCompleteDesc',
@@ -414,4 +424,68 @@ it('Gives a 401 when trying to delete a todo without authorization', async () =>
 
 
 //Test that a 401 is returned when trying to GET a todo item that doesn't belong to the currently authenticated user.
+it('Gives a 401 when trying to GET a todo item that doesn\'t belong to the currently authenticated user', async () => {
+    try {
+        const response = await makeAuthdRequest('GET', '/api/todos/000000000000000000000005');
 
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+
+    }
+
+})
+
+
+//Test that a 401 is returned when trying to PUT (update) a todo item that doesn't belong to the currently authenticated user, and that the database isn't modified.
+it('Gives a 401 when trying to PUT (update) a todo item that doesn\'t belong to the currently authenticated user, and that the database isn\'t modified.', async () => {
+
+    try {
+        const toUpdate = {
+            userSub: 'auth0|000000000000000000000000002',
+            _id: new mongoose.mongo.ObjectId('000000000000000000000005'),
+            title: 'newTitle',
+            description: 'newDesc',
+            isComplete: false,
+            dueDate: dayjs('2100-01-01').format()
+        }
+        await makeAuthdRequest('PUT', '/api/todos/000000000000000000000002', toUpdate);
+        fail('Should have returned a 401');
+
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+
+        const dbTodo = await Todo.findById('000000000000000000000005');
+        expect(dbTodo.title).toBe(otherUsersTodo.title);
+        expect(dbTodo.description).toBe(otherUsersTodo.description);
+        expect(dbTodo.isComplete).toBe(otherUsersTodo.isComplete);
+        expect(dayjs(dbTodo.dueDate)).toEqual(dayjs(otherUsersTodo.dueDate));
+
+
+        
+    }
+
+})
+
+//Test that a 401 is returned when trying to DELETE a todo item that doesn't belong to the currently authenticated user, and that the database isn't modified.
+it('when trying to DELETE a todo item that doesn\'t belong to the currently authenticated user, and that the database isn\'t modified.', async () => {
+
+    try {
+       
+        await makeAuthdRequest('DELETE', '/api/todos/000000000000000000000005');
+        fail('Should have returned a 401');
+
+    } catch (err) {
+        const { response } = err;
+        expect(response).toBeDefined();
+        expect(response.status).toBe(401);
+        // Make sure something wasn't deleted from the db
+        expect(await Todo.countDocuments()).toBe(4);
+
+        
+    }
+
+})

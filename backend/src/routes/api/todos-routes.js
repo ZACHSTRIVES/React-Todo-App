@@ -103,12 +103,18 @@ router.put('/:id', checkJwt,async (req, res) => {
         ...req.body,
         _id: id
     };
-    const success = await todosDao.updateTodo(todo);
-    if (todo.userSub!==req.user.sub){
+    const dbTodo = await todosDao.retrieveTodo(id);
+    if(!dbTodo){
+        res.sendStatus(HTTP_NOT_FOUND)
+    }else if(todo.userSub!==req.user.sub){
         res.sendStatus(UNAUTHENTICATED)
-        return;
+
+    }else{
+        await todosDao.updateTodo(todo);
+        res.sendStatus(HTTP_NO_CONTENT)
     }
-    res.sendStatus(success ? HTTP_NO_CONTENT : HTTP_NOT_FOUND);
+    
+   
 });
 
 // Delete todo
