@@ -83,15 +83,16 @@ router.get('/', checkJwt,async (req, res) => {
 router.get('/:id', checkJwt,async (req, res) => {
     const {id} = req.params;
     const todo = await todosDao.retrieveTodo(id);
-    if (todo.userSub!==req.user.sub){
+    
+    if (!todo) {
+        res.sendStatus(HTTP_NOT_FOUND);
+        
+    }else if(todo.userSub!==req.user.sub){
         res.sendStatus(UNAUTHENTICATED)
-        return;
-    }
-    if (todo) {
-        res.json(todo);
+
     }
     else {
-        res.sendStatus(HTTP_NOT_FOUND);
+        res.json(todo);
     }
 });
 
@@ -102,11 +103,11 @@ router.put('/:id', checkJwt,async (req, res) => {
         ...req.body,
         _id: id
     };
+    const success = await todosDao.updateTodo(todo);
     if (todo.userSub!==req.user.sub){
         res.sendStatus(UNAUTHENTICATED)
         return;
     }
-    const success = await todosDao.updateTodo(todo);
     res.sendStatus(success ? HTTP_NO_CONTENT : HTTP_NOT_FOUND);
 });
 
@@ -115,12 +116,15 @@ router.delete('/:id', checkJwt,async (req, res) => {
     const { id } = req.params;
     const todo = await todosDao.retrieveTodo(id);
 
-    if (todo.userSub!==req.user.sub){
-        res.sendStatus(UNAUTHENTICATED)
-        return;
+    if(todo){
+        if(todo.userSub!==req.user.sub){
+            res.sendStatus(UNAUTHENTICATED)
+            return
+        }
     }
     await todosDao.deleteTodo(id);
     res.sendStatus( HTTP_NO_CONTENT );
+   
 })
 
 export default router;

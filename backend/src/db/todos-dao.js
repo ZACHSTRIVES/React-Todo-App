@@ -1,5 +1,5 @@
 /**
- * This file contains functions which interact with MongoDB, via mongoose, to perform Todo-related
+ * This file contains functions which interact with B, via mongoose, to perform Todo-related
  * CRUD operations.
  */
 
