@@ -471,7 +471,7 @@ it('Gives a 401 when trying to PUT (update) a todo item that doesn\'t belong to 
 })
 
 //Test that a 401 is returned when trying to DELETE a todo item that doesn't belong to the currently authenticated user, and that the database isn't modified.
-it('when trying to DELETE a todo item that doesn\'t belong to the currently authenticated user, and that the database isn\'t modified.', async () => {
+it('Gives a 401 when trying to DELETE a todo item that doesn\'t belong to the currently authenticated user, and that the database isn\'t modified.', async () => {
 
     try {
        
