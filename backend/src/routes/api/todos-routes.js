@@ -1,6 +1,7 @@
 import express from 'express';
 import * as todosDao from '../../db/todos-dao';
 import mongoose from 'mongoose';
+import {issuer,audience} from '../../config'
 const jwt = require('express-jwt');
 const jwtAuthz = require('express-jwt-authz');
 const jwksRsa = require('jwks-rsa');
@@ -23,12 +24,12 @@ const checkJwt = jwt({
       cache: true,
       rateLimit: true,
       jwksRequestsPerMinute: 5,
-      jwksUri: `https://zach.au.auth0.com/.well-known/jwks.json`
+      jwksUri: `https://${issuer}/.well-known/jwks.json`
     }),
   
     // Validate the audience and the issuer.
-    audience: 'superTodo',
-    issuer: [`https://zach.au.auth0.com/`],
+    audience: audience,
+    issuer: [`https://${issuer}/`],
     algorithms: ['RS256']
   });
 

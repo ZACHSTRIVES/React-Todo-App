@@ -1,10 +1,10 @@
 'use strict'
-
+import {issuer,audience} from "../../config"
 const nock = require('nock')
 const jwt = require('jsonwebtoken')
 const auth0 = {
-  audience: 'superTodo',
-  issuer: 'https://zach.au.auth0.com/'
+  audience: audience,
+  issuer: `https://${issuer}/`
 }
 
 
